@@ -43,6 +43,14 @@ class RNSAudioPlayer {
   setVolume = newValue => {
     audioPlayer.setVolume(newValue);
   };
+  
+  seekTo = newValue => {
+    if (Platform.OS === "ios") {
+      audioPlayer.seekTo(newValue);
+    } else {
+      audioPlayer.seekTo(newValue * 1000);
+    }
+  };
 
   restart = () => {};
 }
