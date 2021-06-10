@@ -9,6 +9,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
@@ -29,6 +30,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import okhttp3.internal.connection.ConnectionSpecSelector;
 
 // WritableMap params = Arguments.createMap();
 
@@ -190,7 +193,14 @@ public class RNSimpleAudioPlayerModule extends ReactContextBaseJavaModule {
               thread.join();
             }
           } else {
-            promise.reject("Error", "Unable to play audio now.");
+            WritableMap response = Arguments.createMap();
+            promise.resolve(response);
+            sendStatusEvents(READY);
+            if (thread != null) {
+              observer.stop();
+              thread.join();
+            }
+//            promise.reject("Error", "Unable to play audio now.");
           }
         } catch (IllegalStateException e) {
           e.printStackTrace();
@@ -259,6 +269,7 @@ public class RNSimpleAudioPlayerModule extends ReactContextBaseJavaModule {
       mediaPlayer.seekTo(ms);
     }
   }
+
   private void prepareMediaPlayer(final String path, final Promise promise) {
     new AsyncTask<Void, Void, Void>() {
       protected Void doInBackground(Void... params) {
@@ -266,16 +277,20 @@ public class RNSimpleAudioPlayerModule extends ReactContextBaseJavaModule {
           promise.reject("Error", "File not found.");
           sendStatusEvents(IDLE);
         }
-        final WritableMap response = Arguments.createMap();
         try {
           if (path.startsWith("http")) {
-            mediaPlayer = new MediaPlayer();
+            if (mediaPlayer != null) {
+               mediaPlayer.reset();
+            } else {
+              mediaPlayer = new MediaPlayer();
+            }
             mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mediaPlayer.setDataSource(path);
             mediaPlayer.prepare();
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
               @Override
               public void onPrepared(MediaPlayer mediaPlayer) {
+                final WritableMap response = Arguments.createMap();
                 response.putString("duration", mediaPlayer.getDuration() + "");
                 promise.resolve(response);
                 sendStatusEvents(READY);
@@ -289,6 +304,7 @@ public class RNSimpleAudioPlayerModule extends ReactContextBaseJavaModule {
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
               @Override
               public void onPrepared(MediaPlayer mediaPlayer) {
+                final WritableMap response = Arguments.createMap();
                 response.putString("duration", mediaPlayer.getDuration() + "");
                 promise.resolve(response);
                 sendStatusEvents(READY);
