@@ -253,7 +253,12 @@ public class RNSimpleAudioPlayerModule extends ReactContextBaseJavaModule {
       mediaPlayer.setVolume(volume, volume);
     }
   }
-
+  @ReactMethod
+  public void seekTo(final int ms, final Promise promise) {
+    if (mediaPlayer != null) {
+      mediaPlayer.seekTo(ms);
+    }
+  }
   private void prepareMediaPlayer(final String path, final Promise promise) {
     new AsyncTask<Void, Void, Void>() {
       protected Void doInBackground(Void... params) {
